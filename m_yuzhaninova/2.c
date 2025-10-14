@@ -1,22 +1,22 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <locale.h>
 
-
-extern char *tzname[]; // Массив, который находится в time.h
+extern char *tzname[];
 
 int main()
 {
-    time_t now; // Переменная, которая содержит время в секундах и является целым числом
-    time(&now); // Записываем время в секундах
+    time_t now;
+    time(&now);
+    setlocale(LC_TIME, "");
 
-    setenv("TZ", "America/Los_Angeles", 1); // Меняем часовой пояс 
-    tzset(); // Перезагружаем часовой пояс
+    setenv("TZ", "PST8", 1);
+    tzset();
+    struct tm *sp = localtime(&now);
 
-    struct tm *sp; // Структура, которая разбивает время на компоненты
-    sp = localtime(&now); // Записываем в структу полученные данные
-
-    printf("%s", asctime(sp)); // Выводим текущее время
+    printf("Часовой пояс: %s\n", tzname[sp->tm_isdst]);
+    printf("Текущее время: %s\n", asctime(sp));
     
     return 0;
 }

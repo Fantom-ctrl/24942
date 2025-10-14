@@ -1,98 +1,142 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
-
-typedef struct Strings 
+typedef struct Node
 {
-     
-    char *data; // Строка
-    
-    struct Strings *next; // Указатель на следующий узел списка
-}Str;
+    char *text;
+    struct Node *next;
+} Node;
 
-// Функция добавления нового узла в конец списка
-void new_string(Str **head, const char *str) 
+void free_lines(Node *head)
 {
-    Str *new = (Str *)malloc(sizeof(Str)); // Создаем новый узел
-
-    int len = strlen(str);
-    // Выделяем память в узле под строку + '\0'
-    new->data = (char *)malloc(len + 1);  // Выделяем память подс строку и '\0'
-
-    
-    strcpy(new->data, str); // Копируем строку
-    
-    new->next = NULL; // Указатель на следующий узел делаем NULL
-
-    // Если ни одного узла в списке не было
-    if (*head == NULL) 
+    while (head)
     {
-        *head = new; // то новый узел это первый
-    } 
-    else 
-    {
-        // Доходим до последнего узла
-        Str *p = *head;
-        while (p->next != NULL)
-        {
-            p = p->next;
-        }
-        // Вставляем новый узел
-        p->next = new;
+        Node *temp = head;
+        head = head->next;
+        free(temp->text);
+        free(temp);
     }
 }
 
-// Функция освобождения памяти списка
-void free_list(Str *head) 
+void add_line(Node **head, const char *line)
 {
-    // Пока узлы существуют
-    while (head) 
+    Node *new_node = malloc(sizeof(Node));
+    if (!new_node)
     {
-        Str *tmp = head; // Сохраняем текущий узел
-        head = head->next; // Смещаемся на новый 
+        perror("malloc");
+        return;
+    }
 
-        // Удаляем сохраненный узел
-        free(tmp->data);
-        free(tmp);
+    new_node->text = malloc(strlen(line) + 1);
+    if (!new_node->text)
+    {
+        perror("malloc");
+        free(new_node);
+        return;
+    }
+
+    strcpy(new_node->text, line);
+    new_node->next = NULL;
+
+    if (*head == NULL)
+    {
+        *head = new_node;
+    }
+    else
+    {
+        Node *temp = *head;
+        while (temp->next)
+        {
+            temp = temp->next;
+        }
+        temp->next = new_node;
     }
 }
 
-int main() 
+char *read_input()
 {
-    Str *head = NULL; // Начало списка 
-    char str[1000]; // Новая строка
-
-    printf("Введите строку\n");
-    while (1) 
+    long size = 100;
+    long len = 0;
+    char *buf = malloc(size);
+    if (!buf)
     {
-        fgets(str, 1000, stdin); // Получаем строку
-
-        // Удаляем символ новой строки
-        int len = strlen(str);
-        if (len > 0 && str[len - 1] == '\n')
-        {
-            str[len-1] = '\0';
-        }
-
-        // Конец цикла
-        if (str[0] == '.') 
-        {
-            break; 
-        }
-
-        new_string(&head, str); // Добавляем строку в список
+        perror("malloc");
+        return NULL;
     }
 
-    // Выводим строки из списка
-    Str *p = head;
-    while (p) 
+    while (fgets(buf + len, size - len, stdin))
     {
-        printf("%s\n", p->data);
-        p = p->next;
+        len += strlen(buf + len);
+
+        for (long i = 0; i < len; i++)
+        {
+            if (!isprint((unsigned char)buf[i]) && buf[i] != '\n')
+            {
+                printf("Ошибка: введены недопустимые символы!\n");
+                buf[0] = '\0';
+                return buf;
+            }
+        }
+
+        if (len > 0 && buf[len - 1] == '\n')
+        {
+            buf[len - 1] = '\0';
+            return buf;
+        }
+
+        size *= 2;
+        char *new_buf = realloc(buf, size);
+        if (!new_buf)
+        {
+            perror("realloc");
+            free(buf);
+            return NULL;
+        }
+        buf = new_buf;
     }
 
-    free_list(head); // Очистка памяти
+    if (len == 0)
+    {
+        free(buf);
+        return NULL;
+    }
 
+    return buf;
+}
+
+int main()
+{
+    Node *list = NULL;
+    char *line = NULL;
+
+    printf("Введите строку (. для выхода):\n");
+
+    while ((line = read_input()) != NULL)
+    {
+        if (strcmp(line, ".") == 0)
+        {
+            free(line);
+            break;
+        }
+
+        if (line[0] == '\0')
+        {
+            free(line);
+            continue;
+        }
+
+        add_line(&list, line);
+        free(line);
+    }
+
+    printf("\nВы ввели:\n");
+    for (Node *p = list; p; p = p->next)
+    {
+        printf("%s\n", p->text);
+    }
+
+    free_lines(list);
     return 0;
 }

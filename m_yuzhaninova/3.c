@@ -1,42 +1,40 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void print_uid()
+void check_file(const char *fname)
 {
-    printf("Реальный идентификатор пользователя: %d\n", (int)getuid());
-    printf("Эффективный идентификатор пользователя: %d\n\n", (int)geteuid());
-}
-
-void open_file(const char *path)
-{
-    FILE *data;
-    data = fopen(path, "r");
-
-    if (data != NULL)
+    FILE *file = fopen(fname, "r");
+    if (file)
     {
-        printf("Файл удалось открыть\n\n");
-        fclose(data);
+        printf("Файл открыт успешно\n\n");
+        fclose(file);
     }
     else
     {
-        perror("Произошла ошибка: ");
+        perror("Ошибка при открытии файла");
     }
+}
+
+void show_ids()
+{
+    printf("Реальный UID: %d\n", getuid());
+    printf("Эффективный UID: %d\n\n", geteuid());
 }
 
 int main()
 {
-    char *path = "input.txt";
+    const char *fname = "text.txt";
 
-    print_uid();
-    open_file(path);
+    show_ids();
+    check_file(fname);
 
     if (setuid(getuid()) != 0)
     {
-        perror("Произошла ошибка:");
+        perror("Ошибка setuid");
     }
 
-    print_uid();
-    open_file(path);
+    show_ids();
+    check_file(fname);
 
     return 0;
 }
