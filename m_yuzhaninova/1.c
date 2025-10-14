@@ -41,6 +41,19 @@ int main(int argc, char *argv[])
     char **env = NULL;
     FILE *file = NULL;
     char cmd[256];
+    int success = 0;
+    const char *cmds[] = 
+    {
+        "prctl -n process.max $$ 2>/dev/null",
+        "prctl -n process.max -t task $$ 2>/dev/null",
+        "prctl -n project.max-processes $$ 2>/dev/null"
+    };
+    const char *try_cmds[] = 
+    {
+        "prctl -n process.max -s %ld %d 2>/dev/null",
+        "prctl -n process.max -s %ld -t task %d 2>/dev/null",
+        "prctl -n project.max-processes -s %ld %d 2>/dev/null"
+    };
 
     struct option long_opts[] =
     {
@@ -94,12 +107,6 @@ int main(int argc, char *argv[])
 
             case 'u':
                 #ifdef __sun
-                    const char *cmds[] = {
-                        "prctl -n process.max $$ 2>/dev/null",
-                        "prctl -n process.max -t task $$ 2>/dev/null",
-                        "prctl -n project.max-processes $$ 2>/dev/null"
-                    };
-
                     for (int i = 0; i < 3; ++i) 
                     {
                         file = popen(cmds[i], "r");
@@ -122,30 +129,25 @@ int main(int argc, char *argv[])
 
             case 'U':
                 num = strtol(param, NULL, 10);
-                int success = 0;
+                success = 0;
                 #ifdef __sun
-                    char cmd[256];
-                    const char *try_cmds[] = 
-                    {
-                        "prctl -n process.max -s %ld %d 2>/dev/null",
-                        "prctl -n process.max -s %ld -t task %d 2>/dev/null",
-                        "prctl -n project.max-processes -s %ld %d 2>/dev/null"
-                    };
-
-                    for (size_t i = 0; i < 3; ++i)
+                    for (int i = 0; i < 3; ++i)
                     {
                         snprintf(cmd, sizeof(cmd), try_cmds[i], num, getpid());
                         int ret = system(cmd);
                         if (ret == 0)
                         {
-                            printf("Лимит процессов успешно установлен через: %s\n", try_cmds[i]);
+                            printf("Лимит процессов успешно установлен\n");
                             success = 1;
                             break;
                         }
                     }
 
                     if (!success)
-                        fprintf(stderr, "Не удалось установить лимит процессов через prctl.\n");
+                    {
+                        fprintf(stderr, "Не удалось установить лимит процессов\n");
+                    }
+
                 #else
                     if (getrlimit(RLIMIT_NPROC, &limit) == 0)
                     {
