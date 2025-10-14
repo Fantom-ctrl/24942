@@ -94,18 +94,27 @@ int main(int argc, char *argv[])
 
             case 'u':
                 #ifdef __sun
-                    snprintf(cmd, sizeof(cmd), "prctl -n process.max -t process %d 2>/dev/null", getpid());
-                    file = popen(cmd, "r");
-                    if (file)
+                    const char *cmds[] = {
+                        "prctl -n process.max $$ 2>/dev/null",
+                        "prctl -n process.max -t task $$ 2>/dev/null",
+                        "prctl -n project.max-processes $$ 2>/dev/null"
+                    };
+
+                    for (int i = 0; i < 3; ++i) 
                     {
-                        char buf[256];
-                        printf("Ограничение на количество процессов (Solaris):\n");
-                        while (fgets(buf, sizeof(buf), file))
-                            fputs(buf, stdout);
-                        pclose(file);
+                        file = popen(cmds[i], "r");
+                        if (file) 
+                        {
+                            char buf[256];
+                            if (fgets(buf, sizeof(buf), file)) 
+                            {
+                                printf("Ограничение на количество процессов:\n%s", buf);
+                                pclose(file);
+                                break;
+                            }
+                            pclose(file);
+                        }
                     }
-                    else
-                        printf("Информация о лимите процессов недоступна.\n");
                 #else
                     show_limit("Ограничение на количество процессов", RLIMIT_NPROC);
                 #endif
@@ -113,9 +122,30 @@ int main(int argc, char *argv[])
 
             case 'U':
                 num = strtol(param, NULL, 10);
+                int success = 0;
                 #ifdef __sun
-                    snprintf(cmd, sizeof(cmd), "prctl -n process.max -s %ld -t process %d 2>/dev/null", num, getpid());
-                    system(cmd);
+                    char cmd[256];
+                    const char *try_cmds[] = 
+                    {
+                        "prctl -n process.max -s %ld %d 2>/dev/null",
+                        "prctl -n process.max -s %ld -t task %d 2>/dev/null",
+                        "prctl -n project.max-processes -s %ld %d 2>/dev/null"
+                    };
+
+                    for (size_t i = 0; i < 3; ++i)
+                    {
+                        snprintf(cmd, sizeof(cmd), try_cmds[i], num, getpid());
+                        int ret = system(cmd);
+                        if (ret == 0)
+                        {
+                            printf("Лимит процессов успешно установлен через: %s\n", try_cmds[i]);
+                            success = 1;
+                            break;
+                        }
+                    }
+
+                    if (!success)
+                        fprintf(stderr, "Не удалось установить лимит процессов через prctl.\n");
                 #else
                     if (getrlimit(RLIMIT_NPROC, &limit) == 0)
                     {
