@@ -41,19 +41,6 @@ int main(int argc, char *argv[])
     char **env = NULL;
     FILE *file = NULL;
     char cmd[256];
-    int success = 0;
-    const char *cmds[] = 
-    {
-        "prctl -n process.max $$ 2>/dev/null",
-        "prctl -n process.max -t task $$ 2>/dev/null",
-        "prctl -n project.max-processes $$ 2>/dev/null"
-    };
-    const char *try_cmds[] = 
-    {
-        "prctl -n process.max -s %ld %d 2>/dev/null",
-        "prctl -n process.max -s %ld -t task %d 2>/dev/null",
-        "prctl -n project.max-processes -s %ld %d 2>/dev/null"
-    };
 
     struct option long_opts[] =
     {
@@ -107,21 +94,13 @@ int main(int argc, char *argv[])
 
             case 'u':
                 #ifdef __sun
-                    for (int i = 0; i < 3; ++i) 
+                    file = popen("ulimit -u 2>/dev/null", "r");
+                    if (file && fgets(buf, sizeof(buf), file))
                     {
-                        file = popen(cmds[i], "r");
-                        if (file) 
-                        {
-                            char buf[256];
-                            if (fgets(buf, sizeof(buf), file)) 
-                            {
-                                printf("Ограничение на количество процессов:\n%s", buf);
-                                pclose(file);
-                                break;
-                            }
-                            pclose(file);
-                        }
+                        printf("Ограничение через ulimit: %s", buf);
                     }
+                    if (file)
+                        pclose(file);
                 #else
                     show_limit("Ограничение на количество процессов", RLIMIT_NPROC);
                 #endif
@@ -129,25 +108,19 @@ int main(int argc, char *argv[])
 
             case 'U':
                 num = strtol(param, NULL, 10);
-                success = 0;
                 #ifdef __sun
-                    for (int i = 0; i < 3; ++i)
+                    if (num <= 0)
                     {
-                        snprintf(cmd, sizeof(cmd), try_cmds[i], num, getpid());
-                        int ret = system(cmd);
-                        if (ret == 0)
-                        {
-                            printf("Лимит процессов успешно установлен\n");
-                            success = 1;
-                            break;
-                        }
+                        fprintf(stderr, "Неверное значение для лимита процессов: %s\n", arg);
+                        break;
                     }
 
-                    if (!success)
+                    snprintf(cmd, sizeof(cmd), "ulimit -u %ld 2>/dev/null", num);
+                    int ret = system(cmd);
+                    if (ret != 0)
                     {
-                        fprintf(stderr, "Не удалось установить лимит процессов\n");
+                        fprintf(stderr, "Ошибка установки лимита процессов (Solaris)\n");
                     }
-
                 #else
                     if (getrlimit(RLIMIT_NPROC, &limit) == 0)
                     {
