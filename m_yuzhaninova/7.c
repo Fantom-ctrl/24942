@@ -82,6 +82,8 @@ int main(void)
     struct sigaction sa = {0};
     sa.sa_handler = on_alarm;
     sigaction(SIGALRM, &sa, NULL);
+    fflush(stdout);
+    alarm(5);
 
     while (1)
     {
@@ -89,7 +91,6 @@ int main(void)
         fflush(stdout);
 
         timeout = 0;
-        alarm(5);
 
         char buf[100];
         int idx = 0;
