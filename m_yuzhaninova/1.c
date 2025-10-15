@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
     char **env = NULL;
     FILE *file = NULL;
     char cmd[256];
+    char buf[256];
 
     struct option long_opts[] =
     {
@@ -111,7 +112,7 @@ int main(int argc, char *argv[])
                 #ifdef __sun
                     if (num <= 0)
                     {
-                        fprintf(stderr, "Неверное значение для лимита процессов: %s\n", arg);
+                        fprintf(stderr, "Неверное значение для лимита процессов: %s\n",num);
                         break;
                     }
 
