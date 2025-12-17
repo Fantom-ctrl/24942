@@ -18,9 +18,9 @@ int main()
 
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, "/tmp/mysocket", sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, "./mysocket", sizeof(addr.sun_path) - 1);
 
-    unlink("/tmp/mysocket");
+    unlink("./mysocket");
     if (bind(sfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) 
     {
         exit(1);
@@ -95,6 +95,6 @@ int main()
     }
 
     close(sfd);
-    unlink("/tmp/mysocket");
+    unlink("./mysocket");
     return 0;
 }

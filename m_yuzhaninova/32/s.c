@@ -25,7 +25,7 @@ void* handle(void* arg)
 
 int main()
 {
-    unlink("/tmp/mysocket");
+    unlink("./mysocket");
 
     int sfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sfd < 0) 
@@ -35,7 +35,7 @@ int main()
 
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, "/tmp/mysocket", sizeof(addr.sun_path)-1);
+    strncpy(addr.sun_path, "./mysocket", sizeof(addr.sun_path)-1);
 
     if (bind(sfd, (void*)&addr, sizeof(addr)) < 0)
     {
@@ -71,6 +71,6 @@ int main()
     }
 
     close(sfd);
-    unlink("/tmp/mysocket");
+    unlink("./mysocket");
     return 0;
 }

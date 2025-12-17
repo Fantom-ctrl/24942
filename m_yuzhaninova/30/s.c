@@ -6,25 +6,29 @@
 #include <sys/socket.h>
 #include <string.h>
 
+
 int main() 
 {
     int sfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sfd < 0) 
     {
+	perror("socket");
         exit(1);
     }
 
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, "/tmp/mysocket", sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, "./socket", sizeof(addr.sun_path) - 1);
 
-    unlink("/tmp/mysocket");
+    unlink("./socket");
     if (bind(sfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) 
     {
+	perror("bind");
         exit(1);
     }
     if (listen(sfd, 1) < 0)
     {
+	perror("listen");
         exit(1);
     }
     printf("Сервер запущен\n");
@@ -51,6 +55,6 @@ int main()
 
     close(cfd);
     close(sfd);
-    unlink("/tmp/mysocket");
+    unlink("./socket");
     return 0;
 }

@@ -16,7 +16,7 @@ int main()
 
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, "/tmp/mysocket", sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, "./socket", sizeof(addr.sun_path) - 1);
 
     if (connect(cfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) 
     {
