@@ -94,7 +94,7 @@ int main()
                     buf[j] = toupper((unsigned char)buf[j]);
                 }
 
-                printf("[Client %d] %c\n", fd, c);
+                printf("[Client %d] %s\n", fd, buf);
                 fflush(stdout);
             }
         }
