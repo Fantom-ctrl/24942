@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <string.h>
+#include <time.h>
 
 
 int main(int argc, char *argv[]) 
@@ -29,7 +30,15 @@ int main(int argc, char *argv[])
     {
         t = argv[1];
     }
-    write(cfd, t, strlen(t));
+
+    time_t start = time(NULL);
+    time_t new_time;
+
+    while (difftime(new_time, start) < 5.0)
+    {
+        write(cfd, t, strlen(t));
+        new_time = time(NULL);
+    }
 
     char buf[500];
     long n;

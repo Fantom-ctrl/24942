@@ -24,7 +24,7 @@ void* handle(void* arg)
         }
 
         buf[n] = '\0';
-        printf("[Client %d] %s", fd, buf);
+        printf("[Client %d] %s\n", fd, buf);
         fflush(stdout);
     }
 
