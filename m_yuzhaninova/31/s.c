@@ -18,9 +18,9 @@ int main()
 
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, "./mysocket", sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, "./socket", sizeof(addr.sun_path) - 1);
 
-    unlink("./mysocket");
+    unlink("./socket");
     if (bind(sfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) 
     {
         exit(1);
@@ -79,15 +79,21 @@ int main()
             int fd = pfds[i].fd;
             if (fd != -1 && (pfds[i].revents & POLLIN)) 
             {
-                char c;
-                long n = read(fd, &c, 1);
+                char buf[500];
+                long n = read(fd, buf, sizeof(buf) - 1);
                 if (n <= 0) 
                 {
                     close(fd);
                     pfds[i].fd = -1;
                     continue;
                 }
-                c = toupper(c);
+                buf[n] = '\0';
+
+                for (long j = 0; j < n; j++)
+                {
+                    buf[j] = toupper((unsigned char)buf[j]);
+                }
+
                 printf("[Client %d] %c\n", fd, c);
                 fflush(stdout);
             }
@@ -95,6 +101,6 @@ int main()
     }
 
     close(sfd);
-    unlink("./mysocket");
+    unlink("./socket");
     return 0;
 }

@@ -13,10 +13,19 @@ void* handle(void* arg)
     int fd = *(int*)arg;
     free(arg);
 
-    char c;
-    while (read(fd, &c, 1) > 0)
+    char buf[500];
+    long n;
+
+    while ((n = read(fd, buf, sizeof(buf) - 1)) > 0)
     {
-        printf("[Client %d] %c\n", fd, toupper((unsigned char)c));
+        for (long i = 0; i < n; i++)
+        {
+            buf[i] = toupper((unsigned char)buf[i]);
+        }
+
+        buf[n] = '\0';
+        printf("[Client %d] %s", fd, buf);
+        fflush(stdout);
     }
 
     close(fd);
@@ -25,7 +34,7 @@ void* handle(void* arg)
 
 int main()
 {
-    unlink("./mysocket");
+    unlink("./socket");
 
     int sfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sfd < 0) 
@@ -35,7 +44,7 @@ int main()
 
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, "./mysocket", sizeof(addr.sun_path)-1);
+    strncpy(addr.sun_path, "./socket", sizeof(addr.sun_path)-1);
 
     if (bind(sfd, (void*)&addr, sizeof(addr)) < 0)
     {
@@ -71,6 +80,6 @@ int main()
     }
 
     close(sfd);
-    unlink("./mysocket");
+    unlink("./socket");
     return 0;
 }
